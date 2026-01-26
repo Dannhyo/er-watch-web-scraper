@@ -4,7 +4,7 @@ from typing import List, Dict, Optional
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from scraper.database import get_session, ScrapedData, ScrapingTarget
+from scraper.database import get_session, ScrapedData, ScrapedDataHistory, ScrapingTarget
 from scraper.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -43,7 +43,8 @@ class SupabaseRepository:
 
     def save_scraped_data(self, data: Dict) -> None:
         """
-        Inserts or updates scraped data in the 'scraped_data' table.
+        Inserts or updates scraped data in the 'scraped_data' table,
+        and also inserts a record into 'scraped_data_history' for historical tracking.
 
         Uses SQLAlchemy's merge() for UPSERT behavior based on the primary key.
 
@@ -62,6 +63,7 @@ class SupabaseRepository:
             return
 
         hospital_id = data.get("hospital_id")
+        now = datetime.now(timezone.utc)
 
         try:
             logger.debug(f"Preparing to UPSERT data for hospital_id={hospital_id}: {data}")
@@ -74,7 +76,7 @@ class SupabaseRepository:
                 except ValueError:
                     last_updated = None
 
-            # Create or update the ScrapedData record
+            # Create or update the ScrapedData record (current snapshot)
             scraped_data = ScrapedData(
                 hospital_id=hospital_id,
                 estimated_wait_time=data.get("estimated_wait_time"),
@@ -82,11 +84,24 @@ class SupabaseRepository:
                 patients_in_treatment=data.get("patients_in_treatment"),
                 last_updated=last_updated,
                 status=data.get("status"),
-                updated_at=datetime.now(timezone.utc),
+                updated_at=now,
             )
 
             # merge() handles insert-or-update based on primary key
             self._session.merge(scraped_data)
+
+            # Also insert into history table for historical tracking
+            history_record = ScrapedDataHistory(
+                hospital_id=hospital_id,
+                estimated_wait_time=data.get("estimated_wait_time"),
+                patients_waiting=data.get("patients_waiting"),
+                patients_in_treatment=data.get("patients_in_treatment"),
+                last_updated=last_updated,
+                status=data.get("status"),
+                scraped_at=now,
+            )
+            self._session.add(history_record)
+
             self._session.commit()
 
             logger.info(f"Data saved successfully for hospital_id={hospital_id}.")
@@ -165,6 +180,57 @@ class SupabaseRepository:
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving data for hospital_id={hospital_id}: {e}")
             return None
+
+    def get_historical_data(
+        self,
+        hospital_id: str,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        limit: int = 100
+    ) -> List[Dict]:
+        """
+        Retrieves historical scraped data for a specific hospital.
+
+        Args:
+            hospital_id: The hospital ID to look up.
+            start_time: Optional start of time range (inclusive).
+            end_time: Optional end of time range (inclusive).
+            limit: Maximum number of records to return (default 100).
+
+        Returns:
+            A list of dictionaries with historical data, ordered by scraped_at descending.
+        """
+        if self._session is None:
+            logger.error("Cannot retrieve data: no database session is available.")
+            return []
+
+        try:
+            query = self._session.query(ScrapedDataHistory).filter_by(hospital_id=hospital_id)
+
+            if start_time:
+                query = query.filter(ScrapedDataHistory.scraped_at >= start_time)
+            if end_time:
+                query = query.filter(ScrapedDataHistory.scraped_at <= end_time)
+
+            records = query.order_by(ScrapedDataHistory.scraped_at.desc()).limit(limit).all()
+
+            return [
+                {
+                    "id": record.id,
+                    "hospital_id": record.hospital_id,
+                    "estimated_wait_time": record.estimated_wait_time,
+                    "patients_waiting": record.patients_waiting,
+                    "patients_in_treatment": record.patients_in_treatment,
+                    "last_updated": record.last_updated.isoformat() if record.last_updated else None,
+                    "status": record.status,
+                    "scraped_at": record.scraped_at.isoformat() if record.scraped_at else None,
+                }
+                for record in records
+            ]
+
+        except SQLAlchemyError as e:
+            logger.error(f"Error retrieving historical data for hospital_id={hospital_id}: {e}")
+            return []
 
     def close(self) -> None:
         """Explicitly close the database session."""
