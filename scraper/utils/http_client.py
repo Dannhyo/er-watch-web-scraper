@@ -40,6 +40,11 @@ async def get_session() -> aiohttp.ClientSession:
                     "AppleWebKit/537.36 (KHTML, like Gecko) "
                     "Chrome/120.0.0.0 Safari/537.36"
                 ),
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Accept-Encoding": "gzip, deflate",
+                "Connection": "keep-alive",
+                "Cache-Control": "no-cache",
             },
         )
         logger.debug("Created new aiohttp ClientSession with connection pooling")
