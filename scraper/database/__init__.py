@@ -1,5 +1,5 @@
 from scraper.database.connection import get_engine, get_session, Base
-from scraper.database.models import Hospital, ScrapedData, ScrapingTarget, Sponsor
+from scraper.database.models import Hospital, ScrapedData, ScrapedDataHistory, ScrapingTarget, Sponsor
 
 __all__ = [
     "get_engine",
@@ -7,6 +7,7 @@ __all__ = [
     "Base",
     "Hospital",
     "ScrapedData",
+    "ScrapedDataHistory",
     "ScrapingTarget",
     "Sponsor",
 ]

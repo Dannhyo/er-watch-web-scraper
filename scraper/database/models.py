@@ -74,6 +74,33 @@ class ScrapedData(Base):
         return f"<ScrapedData(hospital_id={self.hospital_id!r}, status={self.status!r})>"
 
 
+class ScrapedDataHistory(Base):
+    """Historical scraped ER wait time data."""
+
+    __tablename__ = "scraped_data_history"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    hospital_id: Mapped[str] = mapped_column(
+        String, ForeignKey("hospitals.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    estimated_wait_time: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
+    patients_waiting: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
+    patients_in_treatment: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
+    last_updated: Mapped[Optional[datetime]] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True
+    )
+    status: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    scraped_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+
+    # Relationships
+    hospital: Mapped["Hospital"] = relationship("Hospital")
+
+    def __repr__(self) -> str:
+        return f"<ScrapedDataHistory(id={self.id!r}, hospital_id={self.hospital_id!r}, scraped_at={self.scraped_at!r})>"
+
+
 class ScrapingTarget(Base):
     """Scraping target configuration for each hospital."""
 
