@@ -4,6 +4,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from scraper.scrapers.api_scraper import APIScraper
+from scraper.scrapers.api_headless_scraper import APIHeadlessScraper
 from scraper.scrapers.html_scraper import HTMLScraper
 from scraper.scrapers.pbi_scraper import PBIScraper
 from scraper.repository.supabase_repository import SupabaseRepository
@@ -83,6 +84,7 @@ class Aggregator:
         "html": 20,  # High concurrency for HTML fetches
         "pbi": 3,    # Low concurrency for browser-based scraping
         "pbi_h": 3,  # Low concurrency for browser-based scraping with headers
+        "api_h": 3,  # Low concurrency for headless browser API scraping
     }
 
     def __init__(self, scraping_targets):
@@ -150,6 +152,9 @@ class Aggregator:
             elif action == "pbi_h":
                 scraper = PBIScraper(target)
                 data = await scraper.scrape(use_headers=True)
+            elif action == "api_h":
+                scraper = APIHeadlessScraper(target)
+                data = await scraper.scrape()
             else:
                 return ScrapeResult(
                     hospital_id=hospital_id,
