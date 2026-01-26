@@ -224,8 +224,18 @@ This tells you exactly:
 1. Add a row to the `scraping_targets` table with:
    - `hospital_id`: Unique identifier
    - `url`: Target URL
-   - `action`: Scraper type (`api`, `html`, `pbi`, `pbi_h`)
+   - `action`: Scraper type (see below)
    - `scraping_instructions`: JSON object with field extraction rules
+
+### Action Types
+
+| Action | Description | Use Case |
+|--------|-------------|----------|
+| `api` | Async HTTP request with aiohttp | Standard JSON/text APIs |
+| `api_h` | Headless browser (Playwright) + JSON parsing | APIs protected by Cloudflare/bot detection |
+| `html` | Async HTTP request + BeautifulSoup parsing | Static HTML pages |
+| `pbi` | Headless browser + HTML parsing | Power BI dashboards |
+| `pbi_h` | Headless browser with headers + HTML parsing | Protected dynamic pages |
 
 ### Scraping Instructions Format
 
