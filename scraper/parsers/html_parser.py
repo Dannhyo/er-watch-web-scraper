@@ -1,11 +1,33 @@
 import re
+import json
 from bs4 import Tag, BeautifulSoup
 
 from .base_parser import BaseParser
 from scraper.utils.logger import get_logger
 from scraper.utils.data_formatter import DataFormatter
+from scraper.utils.field_mappings import map_field_to_db
 
 logger = get_logger(__name__)
+
+
+class SelectorError(Exception):
+    """Exception raised when a selector fails to find or extract data."""
+
+    def __init__(self, field: str, selector_sequence: list, reason: str, details: dict = None):
+        self.field = field
+        self.selector_sequence = selector_sequence
+        self.reason = reason
+        self.details = details or {}
+        super().__init__(self._format_message())
+
+    def _format_message(self) -> str:
+        msg = f"Selector failed for '{self.field}'\n"
+        msg += f"       selectorSequence: {json.dumps(self.selector_sequence)}\n"
+        msg += f"       {self.reason}"
+        if self.details:
+            for key, value in self.details.items():
+                msg += f"\n       {key}: {value}"
+        return msg
 
 
 class HTMLParser(BaseParser):
@@ -34,6 +56,9 @@ class HTMLParser(BaseParser):
         Returns:
             dict or None: A dictionary of parsed fields if successful, or None
             if the content is empty or parsing fails.
+
+        Raises:
+            SelectorError: If parsing fails with detailed error info.
         """
         logger.debug("Creating BeautifulSoup object from HTML content.")
         soup = BeautifulSoup(html_content, "html.parser")
@@ -64,12 +89,20 @@ class HTMLParser(BaseParser):
             dict or None: A dictionary of the extracted and formatted fields,
             keyed by final schema names. Returns None if soup is invalid or
             no fields can be parsed.
+
+        Raises:
+            SelectorError: If a selector fails with detailed error info.
         """
         if not soup:
             logger.error("HTMLParser received no BeautifulSoup object.")
-            return None
+            raise SelectorError(
+                field="(root)",
+                selector_sequence=[],
+                reason="No HTML content provided to parse"
+            )
 
         result = {}
+        errors = []
 
         # Traverse the scraping_instructions to extract each field.
         for key, instructions in self.scraping_instructions.items():
@@ -80,46 +113,54 @@ class HTMLParser(BaseParser):
             format_code = instructions.get("formatCode")  # e.g. "int", "%B %d, %Y"
             unit = instructions.get("unit")
 
-            # 1) Find the element in the DOM based on selector_sequence.
-            element = self._find_element(soup, selector_sequence)
-            if not element:
-                logger.warning(
-                    f"No DOM element found for field '{key}' "
-                    f"using instructions: {instructions}"
+            try:
+                # 1) Find the element in the DOM based on selector_sequence.
+                element = self._find_element(soup, selector_sequence, key)
+                if not element:
+                    raise SelectorError(
+                        field=key,
+                        selector_sequence=selector_sequence,
+                        reason="No element found matching selector"
+                    )
+
+                # 2) Extract raw text from the found element.
+                raw_value = element.get_text(strip=True)
+                if not raw_value:
+                    raise SelectorError(
+                        field=key,
+                        selector_sequence=selector_sequence,
+                        reason="Element found but no text content",
+                        details={"element_tag": element.name, "element_classes": element.get("class", [])}
+                    )
+
+                logger.debug(f"Extracted raw text for field '{key}': {raw_value}")
+
+                # 3) Use DataFormatter to parse/format the raw text.
+                parsed_value = DataFormatter.format_value(
+                    field=key,
+                    format_code=format_code,
+                    raw_value=raw_value,
+                    pattern=pattern,
+                    unit=unit
                 )
-                continue
+                logger.debug(f"Parsed value for field '{key}': {parsed_value}")
 
-            # 2) Extract raw text from the found element.
-            raw_value = element.get_text(strip=True)
-            logger.debug(f"Extracted raw text for field '{key}': {raw_value}")
+                # 4) Map to final schema using centralized mappings
+                db_column = map_field_to_db(key)
+                result[db_column] = parsed_value
 
-            # 3) Use DataFormatter to parse/format the raw text.
-            parsed_value = DataFormatter.format_value(
-                field=key,
-                format_code=format_code,
-                raw_value=raw_value,
-                pattern=pattern,
-                unit=unit
-            )
-            logger.debug(f"Parsed value for field '{key}': {parsed_value}")
+            except SelectorError as e:
+                errors.append(e)
+                logger.warning(str(e))
 
-            # 4) Map to final schema in 'result'.
-            if key == "lastUpdated":
-                result["last_updated"] = parsed_value
-            elif key == "patientsWaiting":
-                result["patients_waiting"] = parsed_value
-            elif key == "patientsInTreatment":
-                result["patients_in_treatment"] = parsed_value
-            elif key == "estimatedWaitTime":
-                result["estimated_wait_time"] = parsed_value
-            else:
-                # fallback if you have more fields
-                result[key] = parsed_value
+        # If all fields failed, raise the first error
+        if errors and not result:
+            raise errors[0]
 
         logger.debug(f"HTMLParser result: {result}")
         return result
 
-    def _find_element(self, soup, selector_sequence):
+    def _find_element(self, soup, selector_sequence, field_name):
         """
         Iteratively narrows down DOM elements using the provided 'selector_sequence'.
         Each item in selector_sequence can specify:
@@ -142,11 +183,16 @@ class HTMLParser(BaseParser):
         Args:
             soup (Tag or BeautifulSoup): The current DOM context in which to search.
             selector_sequence (list): A list of dictionaries defining how to filter elements.
+            field_name (str): The field name being extracted (for error reporting).
 
         Returns:
             Tag or None: The final matched element if found, otherwise None.
+
+        Raises:
+            SelectorError: If the selector sequence fails with detailed info.
         """
         current = soup
+        step_index = 0
 
         for sel in selector_sequence:
             tag = sel.get("tag")
@@ -157,8 +203,12 @@ class HTMLParser(BaseParser):
 
             # Ensure 'current' is a valid Tag before searching within it.
             if not isinstance(current, Tag):
-                logger.warning(f"_find_element encountered a non-Tag object: {current}")
-                return None
+                raise SelectorError(
+                    field=field_name,
+                    selector_sequence=selector_sequence,
+                    reason=f"Step {step_index}: Expected Tag element, got {type(current).__name__}",
+                    details={"failed_at_step": step_index, "selector": sel}
+                )
 
             # If 'tag' is specified, find all child elements matching it.
             # Otherwise, find_all(True) to get all child elements.
@@ -186,20 +236,36 @@ class HTMLParser(BaseParser):
                 candidates = [c for c in candidates if t_pattern.search(c.get_text())]
 
             if not candidates:
-                logger.debug("No matching elements found at this step of the selector sequence.")
-                return None
+                raise SelectorError(
+                    field=field_name,
+                    selector_sequence=selector_sequence,
+                    reason=f"Step {step_index}: No elements found matching criteria",
+                    details={
+                        "failed_at_step": step_index,
+                        "selector": sel,
+                        "parent_tag": current.name if hasattr(current, 'name') else str(type(current))
+                    }
+                )
 
             # If nthOfType is specified, select that specific occurrence (1-based).
             if nth_of_type:
                 if 1 <= nth_of_type <= len(candidates):
                     current = candidates[nth_of_type - 1]
                 else:
-                    logger.debug(
-                        f"nthOfType {nth_of_type} out of range (only {len(candidates)} candidates)."
+                    raise SelectorError(
+                        field=field_name,
+                        selector_sequence=selector_sequence,
+                        reason=f"Step {step_index}: nthOfType {nth_of_type} out of range",
+                        details={
+                            "failed_at_step": step_index,
+                            "selector": sel,
+                            "available_count": len(candidates)
+                        }
                     )
-                    return None
             else:
                 # Default to the first candidate if no nthOfType was provided.
                 current = candidates[0]
+
+            step_index += 1
 
         return current

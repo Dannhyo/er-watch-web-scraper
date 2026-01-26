@@ -186,15 +186,24 @@ class DataFormatter:
 
             else:
                 # If 'unit' is not recognized or it's None, try parsing "X hours and Y minutes" style.
+                # Pattern may have optional hours group, so group(1) could be None
                 match = re.match(pattern, raw_value)
                 if match:
                     try:
-                        hours = int(match.group(1))
-                        minutes = int(match.group(2))
+                        hours_str = match.group(1)
+                        minutes_str = match.group(2)
+
+                        # Ensure at least one group matched (not both None)
+                        if not hours_str and not minutes_str:
+                            logger.warning(f"Pattern matched but no hours/minutes captured from '{raw_value}'. Returning None.")
+                            return None
+
+                        hours = int(hours_str) if hours_str else 0
+                        minutes = int(minutes_str) if minutes_str else 0
                         total_minutes = hours * 60 + minutes
                         logger.info(f"Extracted '{raw_value}' as {total_minutes} total minutes.")
                         return total_minutes
-                    except ValueError as e:
+                    except (ValueError, IndexError) as e:
                         logger.error(f"Failed to parse hours/minutes from raw_value='{raw_value}'. Error: {e}")
                         return None
                 else:

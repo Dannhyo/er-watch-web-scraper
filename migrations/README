@@ -1,0 +1,39 @@
+Database Migrations
+===================
+
+This directory contains Alembic database migrations for the ER Watch Scraper.
+
+Commands
+--------
+
+# Check current migration status
+alembic current
+
+# Apply all pending migrations
+alembic upgrade head
+
+# Rollback one migration
+alembic downgrade -1
+
+# Rollback all migrations
+alembic downgrade base
+
+# Generate a new migration (auto-detect changes from models)
+alembic revision --autogenerate -m "description of changes"
+
+# Generate an empty migration (manual)
+alembic revision -m "description of changes"
+
+# View migration history
+alembic history
+
+# View SQL without executing (offline mode)
+alembic upgrade head --sql
+
+Notes
+-----
+
+- The initial migration (001) marks the baseline for existing tables.
+- Run `alembic stamp head` on existing databases to mark them as up-to-date
+  without running migrations (since tables already exist).
+- Always review auto-generated migrations before applying them.

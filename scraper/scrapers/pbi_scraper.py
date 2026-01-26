@@ -1,6 +1,6 @@
 import asyncio
 from bs4 import BeautifulSoup
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
 from .base_scraper import BaseScraper
 from scraper.parsers.html_parser import HTMLParser
@@ -16,7 +16,7 @@ class PBIScraper(BaseScraper):
 
     Inherits from:
         BaseScraper (ABC): Provides abstract scrape method signature and
-        a finalize_data hook for post-processing the scraped data.
+        a process_parsed_data hook for post-processing the scraped data.
     """
 
     async def scrape(self, use_headers=False):
@@ -36,57 +36,79 @@ class PBIScraper(BaseScraper):
                 - A dictionary with structured fields (e.g., estimated_wait_time,
                   patients_waiting, patients_in_treatment, etc.) if scraping succeeds.
                 - None if any error occurs or the parsed data is empty.
+
+        Raises:
+            Exception: Propagates exceptions with detailed error info for failure tracking.
         """
-        logger.info(f"Starting Power BI scraping for hospital_id={self.hospital_id}, URL={self.url}")
+        logger.info(f"Starting Power BI scraping for {self.url}")
+
+        browser = None
+        playwright = None
 
         try:
             # 1) Initialize the async Playwright context and launch headless Chromium.
-            async with async_playwright() as p:
-                logger.debug("Launching headless Chromium browser.")
-                browser = await p.chromium.launch(headless=True)
-                page = await browser.new_page()
+            playwright = await async_playwright().start()
+            logger.debug("Launching headless Chromium browser.")
+            browser = await playwright.chromium.launch(headless=True)
+            page = await browser.new_page()
 
-                # Optionally set custom headers (e.g., User-Agent).
-                if use_headers:
-                    logger.debug("Applying additional HTTP headers for scraping.")
-                    await page.set_extra_http_headers({
-                        "User-Agent": (
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                            "AppleWebKit/537.36 (KHTML, like Gecko) "
-                            "Chrome/91.0.4472.124 Safari/537.36"
-                        ),
-                        "Accept-Language": "en-US,en;q=0.9",
-                        "Upgrade-Insecure-Requests": "1"
-                    })
+            # Optionally set custom headers (e.g., User-Agent).
+            if use_headers:
+                logger.debug("Applying additional HTTP headers for scraping.")
+                await page.set_extra_http_headers({
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36"
+                    ),
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Upgrade-Insecure-Requests": "1"
+                })
 
-                # 2) Navigate to the provided URL.
-                logger.debug(f"Navigating to: {self.url}")
-                await page.goto(self.url)
+            # 2) Navigate to the provided URL.
+            logger.debug(f"Navigating to: {self.url}")
+            await page.goto(self.url)
 
-                # 3) Wait for the network to become idle, indicating that most
-                #    dynamic content should be loaded.
-                try:
-                    logger.debug("Waiting for the Power BI visual to load and network to be idle...")
-                    await page.wait_for_load_state('networkidle', timeout=30_000)
-                    logger.debug("Power BI visual loaded successfully.")
-                except asyncio.TimeoutError:
-                    # If the page takes too long, we proceed anyway.
-                    logger.warning(
-                        "Timed out waiting for the network to become idle. Proceeding..."
-                    )
+            # 3) Wait for the network to become idle, indicating that most
+            #    dynamic content should be loaded.
+            try:
+                logger.debug("Waiting for Power BI visual to load...")
+                await page.wait_for_load_state('networkidle', timeout=30_000)
+                logger.debug("Power BI visual loaded successfully.")
+            except PlaywrightTimeoutError:
+                error_msg = "Timeout waiting for network idle (30s)"
+                logger.error(error_msg)
+                raise Exception(error_msg)
 
-                # 4) Extract the fully rendered HTML content after JavaScript has executed.
-                logger.debug("Extracting rendered HTML content from the page.")
-                content = await page.content()
+            # 4) Extract the fully rendered HTML content after JavaScript has executed.
+            logger.debug("Extracting rendered HTML content from the page.")
+            content = await page.content()
 
-                # 5) Close the browser to free resources.
-                logger.debug("Closing the browser.")
-                await browser.close()
-
+        except PlaywrightTimeoutError as e:
+            error_msg = f"Playwright timeout: {e}"
+            logger.error(f"PBI scrape failed: {error_msg}")
+            raise Exception(error_msg)
         except Exception as e:
-            # Log and return None if any error occurs in the Playwright process.
-            logger.error(f"Failed to scrape Power BI page for hospital_id={self.hospital_id}. Error: {e}")
-            return None
+            # Re-raise with clear error message
+            if "Timeout" in str(e):
+                raise
+            error_msg = f"Browser error: {type(e).__name__}: {e}"
+            logger.error(f"PBI scrape failed: {error_msg}")
+            raise Exception(error_msg)
+        finally:
+            # 5) Always close browser and playwright to free resources
+            if browser:
+                try:
+                    await browser.close()
+                    logger.debug("Browser closed successfully.")
+                except Exception as close_err:
+                    logger.warning(f"Error closing browser: {close_err}")
+            if playwright:
+                try:
+                    await playwright.stop()
+                    logger.debug("Playwright stopped successfully.")
+                except Exception as stop_err:
+                    logger.warning(f"Error stopping playwright: {stop_err}")
 
         # 6) Parse the retrieved HTML with BeautifulSoup and the custom HTMLParser.
         try:
@@ -98,7 +120,8 @@ class PBIScraper(BaseScraper):
             parsed_data = parser.parse(soup)
 
         except Exception as e:
-            logger.error(f"Failed to parse HTML content for hospital_id={self.hospital_id}. Error: {e}")
-            return None
+            error_msg = f"HTML parsing failed: {type(e).__name__}: {e}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
 
         return self.process_parsed_data(parsed_data)
