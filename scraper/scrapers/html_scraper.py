@@ -1,5 +1,6 @@
 import aiohttp
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
 from .base_scraper import BaseScraper
 from scraper.parsers.html_parser import HTMLParser
@@ -41,7 +42,11 @@ class HTMLScraper(BaseScraper):
         # 1) Send an async GET request to the target URL
         try:
             session = await get_session()
-            async with session.get(self.url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+            # Add Referer header based on the URL domain (some servers require this)
+            parsed_url = urlparse(self.url)
+            referer = f"{parsed_url.scheme}://{parsed_url.netloc}/"
+            headers = {"Referer": referer}
+            async with session.get(self.url, timeout=aiohttp.ClientTimeout(total=10), headers=headers) as response:
                 response.raise_for_status()
                 logger.debug(f"Received HTML response from {self.url}")
                 html_content = await response.text()
