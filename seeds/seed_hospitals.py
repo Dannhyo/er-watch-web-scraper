@@ -35,6 +35,7 @@ def seed_hospitals(csv_path: str = "data/hospitals_rows.csv") -> int:
             for row in reader:
                 hospital = Hospital(
                     id=row["id"],
+                    slug=row.get("slug") or None,
                     region=row["region"] or None,
                     classification=row["classification"] or None,
                     healthcare_network=row["healthcare_network"] or None,

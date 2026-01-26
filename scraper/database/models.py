@@ -22,6 +22,7 @@ class Hospital(Base):
     __tablename__ = "hospitals"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    slug: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True, index=True)
     region: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     classification: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     healthcare_network: Mapped[Optional[str]] = mapped_column(String, nullable=True)
