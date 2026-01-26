@@ -3,11 +3,66 @@ import json
 import os
 from pathlib import Path
 
-from scraper.aggregator import Aggregator
+from scraper.aggregator import Aggregator, RunSummary
 from scraper.utils.logger import get_logger
 from scraper.repository.supabase_repository import SupabaseRepository
 
 logger = get_logger(__name__)
+
+
+def print_run_summary(summary: RunSummary) -> None:
+    """
+    Prints a detailed summary of the scraper run, including all failures
+    and parsing warnings (fields that returned None).
+
+    Args:
+        summary: The RunSummary from the aggregator run
+    """
+    print("\n" + "=" * 60)
+    print("                    SCRAPER RUN SUMMARY")
+    print("=" * 60)
+    print(f"Total hospitals: {summary.total}")
+    print(f"Successful: {summary.successful} ({summary.success_rate:.1f}%)")
+    print(f"Failed: {summary.failed} ({100 - summary.success_rate:.1f}%)")
+    print(f"Duration: {summary.duration_seconds:.1f} seconds")
+
+    if summary.failures:
+        print("\nFAILED HOSPITALS:")
+        print("-" * 60)
+
+        for failure in summary.failures:
+            print(f"\nHospital ID: {failure.hospital_id}")
+            print(f"Action: {failure.action}")
+            print(f"URL: {failure.url}")
+            print(f"Error: {failure.error}")
+
+    if summary.parsing_warnings:
+        print("\n" + "=" * 60)
+        print("                   PARSING WARNINGS")
+        print("                 (Fields returned None)")
+        print("=" * 60)
+        print(f"Hospitals with null fields: {summary.hospitals_with_null_fields}")
+        print(f"Total null fields: {len(summary.parsing_warnings)}")
+        print("-" * 60)
+
+        # Group warnings by hospital for cleaner output
+        warnings_by_hospital = {}
+        for warning in summary.parsing_warnings:
+            if warning.hospital_id not in warnings_by_hospital:
+                warnings_by_hospital[warning.hospital_id] = {
+                    "action": warning.action,
+                    "url": warning.url,
+                    "fields": []
+                }
+            warnings_by_hospital[warning.hospital_id]["fields"].append(warning.field)
+
+        for hospital_id, info in sorted(warnings_by_hospital.items()):
+            print(f"\nHospital ID: {hospital_id}")
+            print(f"Action: {info['action']}")
+            print(f"URL: {info['url']}")
+            print(f"Null fields: {', '.join(info['fields'])}")
+
+    print("=" * 60 + "\n")
 
 
 async def main():
@@ -15,7 +70,8 @@ async def main():
     Main entry point for running the scraper. It:
       1. Saves target data to a JSON file.
       2. Reads the JSON data containing scraping targets.
-      3. Instantiates the aggregator and processes each target.
+      3. Instantiates the aggregator and processes each target concurrently.
+      4. Prints a detailed run summary with any failures.
     """
     logger.info("Starting the scraper...")
 
@@ -40,7 +96,11 @@ async def main():
     # Step 3: Instantiate the aggregator with the loaded targets and run the process.
     aggregator = Aggregator(scraping_targets)
     logger.info("Running the aggregator...")
-    await aggregator.run()
+    summary = await aggregator.run()
+
+    # Step 4: Print the run summary with failure details.
+    print_run_summary(summary)
+
     logger.info("Scraper run complete.")
 
 
