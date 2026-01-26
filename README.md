@@ -145,6 +145,21 @@ alembic revision --autogenerate -m "Description of changes"
 alembic current
 ```
 
+### Database Schema
+
+| Table | Purpose |
+|-------|---------|
+| `hospitals` | Hospital information (name, address, coordinates) |
+| `scraping_targets` | Scraping configuration per hospital (URL, action, instructions) |
+| `scraped_data` | Current snapshot of ER wait times (1 row per hospital) |
+| `scraped_data_history` | Historical record of all scrapes (for analytics/trends) |
+| `sponsors` | Platform sponsor information |
+
+The `scraped_data_history` table stores every scrape result, enabling:
+- Historical trend analysis
+- Wait time predictions
+- Data quality monitoring
+
 ---
 
 ## Usage
