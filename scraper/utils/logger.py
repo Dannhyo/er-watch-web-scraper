@@ -1,5 +1,30 @@
 import logging
 import colorlog
+from contextvars import ContextVar
+from typing import Optional
+
+# Context variable to store current hospital_id for logging
+_current_hospital_id: ContextVar[Optional[str]] = ContextVar('hospital_id', default=None)
+
+
+def set_hospital_context(hospital_id: Optional[str]) -> None:
+    """Set the current hospital_id for logging context."""
+    _current_hospital_id.set(hospital_id)
+
+
+def get_hospital_context() -> Optional[str]:
+    """Get the current hospital_id from logging context."""
+    return _current_hospital_id.get()
+
+
+class HospitalContextFilter(logging.Filter):
+    """Filter that adds hospital_id to log records."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        hospital_id = _current_hospital_id.get()
+        record.hospital_id = f"[{hospital_id}]" if hospital_id else ""
+        return True
+
 
 def get_logger(name: str) -> logging.Logger:
     """
@@ -29,11 +54,12 @@ def get_logger(name: str) -> logging.Logger:
     # The format includes:
     #   - %(log_color)s: The color escape codes provided by colorlog
     #   - %(levelname)s: The level of the message (DEBUG, INFO, etc.)
+    #   - %(hospital_id)s: The current hospital being processed (if any)
     #   - %(name)s: The logger's name
     #   - %(lineno)d: The line number where the logger was called
     #   - %(message)s: The actual log message
     formatter = colorlog.ColoredFormatter(
-        "%(log_color)s[%(levelname)s] %(name)s:%(lineno)d - %(message)s",
+        "%(log_color)s[%(levelname)s]%(hospital_id)s %(name)s:%(lineno)d - %(message)s",
         log_colors={
             "DEBUG":    "light_black",
             "INFO":     "white",
@@ -47,6 +73,9 @@ def get_logger(name: str) -> logging.Logger:
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(formatter)
+
+    # Add the hospital context filter
+    console_handler.addFilter(HospitalContextFilter())
 
     # Attach the console handler to the logger.
     logger.addHandler(console_handler)
