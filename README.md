@@ -1,5 +1,5 @@
 # ER Watch Scraper
-[![Run My Scraper](https://github.com/ahmaad-ansari/er-watch-scraper/actions/workflows/scraper.yml/badge.svg)](https://github.com/ahmaad-ansari/er-watch-scraper/actions/workflows/scraper.yml)
+[![Run My Scraper](https://github.com/ahmaad-ansari/er-watch-web-scraper/actions/workflows/main-scraper.yml/badge.svg)](https://github.com/ahmaad-ansari/er-watch-web-scraper/actions/workflows/main-scraper.yml)
 
 **ER Watch Scraper** is an async web scraping system that collects real-time emergency room wait times from hospitals across Ontario. It supports multiple data sources including REST APIs, HTML pages, and Power BI dashboards, storing results in a PostgreSQL database.
 
